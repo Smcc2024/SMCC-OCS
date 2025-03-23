@@ -1,4 +1,3 @@
-
 'use server'
 
 import connectDB from "@/lib/database";
@@ -94,12 +93,22 @@ export async function updateProfileAccount(role: Roles, id: string, formData: Fo
     const data = {
       $set: { ...Object.fromEntries(dataForm) }
     }
-
-    const updated = await User.findByIdAndUpdate(id, data, { new: true, upsert: false, runValidators: true  })
-
-    if (!!updated) {
-      return {
-        success: 'Profile updated successfully'
+    const password = data.$set.password;
+    delete data.$set.password;
+    const userupdate = await User.findByIdAndUpdate({ _id: id }, data, { new: true, upsert: false, runValidators: true }).exec();
+    if (!!userupdate?._id) {
+      if (!!password) {
+        userupdate.password = password;
+        const updated = await userupdate.save({ new: true, upsert: false, runValidators: true });
+        if (!!updated) {
+          return {
+            success: 'Profile updated successfully. (Password changed)'
+          }
+        }
+      } else {
+        return {
+          success: 'Profile updated successfully'
+        }
       }
     }
   } catch (e) {
